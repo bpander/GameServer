@@ -1,0 +1,21 @@
+{
+  "name": "GameServer",
+  "main": "GameServer.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/bpander/GameServer",
+  "authors": [
+    "Bradley Anderson <banderso@nerdery.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "socket.io-client": "~1.2.1",
+    "bluebird": "~2.6.4"
+  }
+}

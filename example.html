@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GameServer example</title>
+</head>
+<body>
+
+    <h1>Game Server Example</h1>
+
+    <section>
+        <form id="js-joinGameForm">
+            <fieldset>
+                <legend>Join room</legend>
+                <ul>
+                    <li>
+                        <div>
+                            <label for="join-code">Enter code</label>
+                        </div>
+                        <div>
+                            <input type="text" id="join-code" name="code" />
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <label for="join-name">Enter name</label>
+                        </div>
+                        <div>
+                            <input type="text" id="join-name" name="name" />
+                        </div>
+                    </li>
+                </ul>
+                <button>Join room</button>
+            </fieldset>
+        </form>
+    </section>
+
+    <section>
+        <form id="js-createRoomForm">
+            <fieldset>
+                <legend>Create room</legend>
+                <div>
+                    <label for="create-name">Enter name</label>
+                    <input type="text" id="create-name" name="name" />
+                </div>
+                <button>Create room</button>
+            </fieldset>
+        </form>
+    </section>
+
+
+    <script src="bower_components/bluebird/js/browser/bluebird.js"></script>
+    <script src="bower_components/socket.io-client/socket.io.js"></script>
+    <script>
+window.Client = (function () {
+    'use strict';
+
+
+    function Client () {
+
+        this.socket = io();
+
+    }
+
+
+    var _requestCount = 0;
+
+
+    Client.generateUniqueRequestId = function () {
+        return _requestCount++;
+    };
+
+
+    Client.prototype.request = function (request) {
+        var self = this;
+        return new Promise(function (resolve) {
+            var handleResponse = function (response) {
+                if (response.id === request.id) {
+                    self.socket.off('response', handleResponse);
+                    resolve(response.room);
+                }
+            };
+            request.id = Client.generateUniqueRequestId();
+            self.socket.on('response', handleResponse);
+            self.socket.emit('request', request);
+        });
+    };
+
+
+    Client.prototype.joinRoom = function (code) {
+        return this.request({
+            method: 'joinRoom',
+            value: code
+        });
+    };
+
+
+    Client.prototype.createRoom = function () {
+        return this.request({
+            method: 'createRoom'
+        });
+    };
+
+
+    return Client;
+}());
+    </script>
+    <script>
+(function () {
+    'use strict';
+
+
+    var client = new Client();
+    var joinGameForm = document.getElementById('js-joinGameForm');
+    var createRoomForm = document.getElementById('js-createRoomForm');
+    var handleJoinGameFormSubmit = function (e) {
+        var code = joinGameForm.elements['code'].value;
+        e.preventDefault();
+        client.joinRoom(code).done(function (room) {
+            console.log('joined', room);
+        });
+    };
+    var handleCreateRoomFormSubmit = function (e) {
+        var name = createRoomForm.elements['name'].value;
+        e.preventDefault();
+        client.createRoom().done(function (room) {
+            console.log('created', room);
+        });
+    }
+    joinGameForm.addEventListener('submit', handleJoinGameFormSubmit);
+    createRoomForm.addEventListener('submit', handleCreateRoomFormSubmit);
+
+
+}());
+    </script>
+</body>
+</html>
