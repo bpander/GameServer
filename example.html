@@ -76,7 +76,7 @@ window.Client = (function () {
             var handleResponse = function (response) {
                 if (response.id === request.id) {
                     self.socket.off('response', handleResponse);
-                    resolve(response.room);
+                    resolve(response);
                 }
             };
             request.id = Client.generateUniqueRequestId();
@@ -129,6 +129,9 @@ window.Client = (function () {
     joinGameForm.addEventListener('submit', handleJoinGameFormSubmit);
     createRoomForm.addEventListener('submit', handleCreateRoomFormSubmit);
 
+    client.socket.on('join', function () {
+        console.log('someone joined the room');
+    });
 
 }());
     </script>

@@ -22,40 +22,42 @@ GameServer.prototype.init = function () {
     var self = this;
     this.io.on('connection', function (socket) {
         socket.on('request', function (request) {
-            var response = { id: request.id };
+            var response = new GameServer.Response(request.id);
+            var room;
+            var code;
             switch (request.method) {
 
                 case 'createRoom':
-                    response.room = self.createRoom();
+                    code = self.generateUniqueCode();
+                    response.success = true;
+                    response.code = code;
+                    socket.join(code);
                     socket.emit('response', response);
                     break;
 
                 case 'joinRoom':
-                    response.room = self.getRoomByCode(request.value);
-                    // TODO: Put the socket in the room if we found it
+                    code = request.value;
+                    room = self.io.sockets.adapter.rooms[code];
+                    if (room !== undefined) {
+                        response.success = true;
+                        response.code = code;
+                        socket.join(code);
+                        socket.broadcast.to(code).emit('join');
+                    }
                     socket.emit('response', response);
                     break;
             }
-        });
-        socket.on('disconnect', function () {
-            // TODO: Somehow we'll need to clear out empty rooms
         });
     });
 };
 
 
-GameServer.prototype.createRoom = function () {
-    var room = new GameServer.Room(this.generateUniqueCode());
-    this.rooms.push(room);
-    return room;
-};
-
-
 GameServer.prototype.generateUniqueCode = function () {
+    var rooms = this.io.sockets.adapter.rooms;
     var code;
     while (true) {
         code = Array.prototype.map.call('****', _getRandomCapitalLetter).join('');
-        if (this.getRoomByCode(code) === null) {
+        if (rooms[code] === undefined) {
             break;
         }
     }
@@ -63,21 +65,14 @@ GameServer.prototype.generateUniqueCode = function () {
 };
 
 
-GameServer.prototype.getRoomByCode = function (code) {
-    var i = 0;
-    var room;
-    while ((room = this.rooms[i++]) !== undefined) {
-        if (room.code === code) {
-            return room;
-        }
-    }
-    return null;
-};
 
+GameServer.Response = function (id) {
 
-GameServer.Room = function (code) {
+    this.id = id;
 
-    this.code = code;
+    this.success = false;
+
+    this.code = null;
 
 };
 
