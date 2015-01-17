@@ -133,6 +133,11 @@ window.Client = (function () {
         console.log('someone joined the room');
     });
 
+    client.socket.on('leave', function () {
+        console.log('someone left the room');
+    });
+
+
 }());
     </script>
 </body>

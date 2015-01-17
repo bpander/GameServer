@@ -1,3 +1,6 @@
+'use strict';
+
+
 var socketIO = require('socket.io');
 
 
@@ -32,16 +35,26 @@ GameServer.prototype.init = function () {
                     response.success = true;
                     response.code = code;
                     socket.join(code);
+                    socket.on('disconnect', function () {
+                        socket.broadcast.to(code).emit('leave');
+                    });
                     socket.emit('response', response);
                     break;
 
                 case 'joinRoom':
                     code = request.value;
                     room = self.io.sockets.adapter.rooms[code];
-                    if (room !== undefined) {
-                        response.success = true;
-                        response.code = code;
+                    if (room === undefined) {
+                        socket.emit('response', response);
+                        break;
+                    }
+                    response.success = true;
+                    response.code = code;
+                    if (socket.rooms.indexOf(code) === -1) {
                         socket.join(code);
+                        socket.on('disconnect', function () {
+                            socket.broadcast.to(code).emit('leave');
+                        });
                         socket.broadcast.to(code).emit('join');
                     }
                     socket.emit('response', response);
